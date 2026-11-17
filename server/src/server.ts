@@ -21,4 +21,6 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'test' && require.main === m
   });
 }
 
-export default app;
+// Export app for both CommonJS (module.exports) and ES module environments (Vercel serverless execution)
+(app as any).default = app;
+export = app;

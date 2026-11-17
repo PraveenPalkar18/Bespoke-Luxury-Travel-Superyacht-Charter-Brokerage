@@ -53,7 +53,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   try {
     const res = await fetch(url, { ...options, headers, credentials: 'include' });
-    const data = await res.json().catch(() => ({}));
+    let data: any = {};
+    const text = await res.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text && text.length < 300 && !text.includes('<!DOCTYPE') ? text : undefined };
+    }
 
     if (!res.ok) {
       throw new ApiError(

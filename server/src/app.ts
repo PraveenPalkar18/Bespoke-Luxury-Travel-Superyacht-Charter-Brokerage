@@ -53,6 +53,7 @@ export const createApp = () => {
 
   // Anti-CSRF Protection for cookie-authenticated state-changing requests
   app.use('/api', csrfProtection);
+  app.use(csrfProtection);
 
   // Lazy DB connection middleware (crucial for serverless environments)
   if (process.env.NODE_ENV !== 'test') {
@@ -90,14 +91,16 @@ export const createApp = () => {
 
   // Global rate limiter for API routes
   app.use('/api', apiLimiter);
+  app.use(apiLimiter);
 
   // Logging
   if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
   }
 
-  // API Routes
+  // API Routes (mount at /api and / to handle both prefixed and root service routings)
   app.use('/api', routes);
+  app.use(routes);
 
   // 404 Handler
   app.use((req, res) => {
