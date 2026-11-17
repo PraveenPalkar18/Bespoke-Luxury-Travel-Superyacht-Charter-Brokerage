@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { submitInquiry } from '../../lib/api';
@@ -11,7 +11,7 @@ import StepContact from '../../components/plan/StepContact';
 import SubmissionConfirmation from '../../components/plan/SubmissionConfirmation';
 import { RequestedService } from '../../types';
 
-export default function PlanJourneyPage() {
+function PlanJourneyContent() {
   const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -382,5 +382,19 @@ export default function PlanJourneyPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function PlanJourneyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-gold)' }}>
+          Loading journey planner...
+        </div>
+      }
+    >
+      <PlanJourneyContent />
+    </Suspense>
   );
 }

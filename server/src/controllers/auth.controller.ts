@@ -13,23 +13,33 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
   try {
     const { email, password } = req.body;
     const ctx = getClientContext(req);
-    const { token, user, sessionId } = await authService.login(email, password, ctx);
+    const { token, user, sessionId, csrfToken } = await authService.login(email, password, ctx);
 
-    // Set secure HttpOnly cookie for browser authentication
+    // Set secure HttpOnly session cookie for browser authentication
     res.cookie('aurelia_session', token, {
       httpOnly: true,
       secure: config.nodeEnv === 'production',
-      sameSite: config.nodeEnv === 'production' ? 'none' : 'lax',
+      sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Set double-submit Anti-CSRF token cookie (accessible to client-side scripts)
+    res.cookie('aurelia_csrf', csrfToken, {
+      httpOnly: false,
+      secure: config.nodeEnv === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
       success: true,
       token,
+      csrfToken,
       user,
       sessionId,
-      data: { token, user, sessionId },
+      data: { token, csrfToken, user, sessionId },
       message: 'Authentication successful. Access granted to Aurelia & Co. terminal.',
     });
   } catch (error) {
@@ -44,8 +54,9 @@ export const logout = async (req: AuthenticatedRequest, res: Response, next: Nex
       await authService.logout(req.user.id, req.user.sessionId, ctx);
     }
 
-    // Clear session cookie
+    // Clear session and CSRF cookies
     res.clearCookie('aurelia_session', { path: '/' });
+    res.clearCookie('aurelia_csrf', { path: '/' });
 
     res.status(200).json({
       success: true,

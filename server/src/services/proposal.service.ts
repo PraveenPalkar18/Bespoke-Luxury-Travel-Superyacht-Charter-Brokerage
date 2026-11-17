@@ -5,6 +5,7 @@ import { IProposal, ProposalStatus, AuthUserPayload } from '../types';
 import { ensureDatabaseConnected } from '../config/database';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
 import { auditService } from './audit.service';
+import { bookingService } from './booking.service';
 
 export class ProposalService {
   private generateReferenceCode(): string {
@@ -270,16 +271,19 @@ export class ProposalService {
       metadata: { decision, clientNotes },
     });
 
-    // Update Inquiry state
+    // Update Inquiry state and create booking
     const inquiry = await InquiryModel.findById(proposal.inquiryId);
     if (inquiry) {
       if (decision === 'accepted') {
-        inquiry.status = 'confirmed';
+        // Business Rule: Proposal acceptance NEVER automatically confirms a booking.
+        // It creates a booking in pending_supplier_confirmation status.
+        const booking = await bookingService.createBookingFromProposal(proposal, inquiry);
+        inquiry.status = 'supplier_contacted';
         inquiry.internalNotes.push({
           _id: undefined as any,
           authorId: 'client',
           authorName: `${proposal.clientName} (Client)`,
-          content: `CLIENT ACCEPTED PROPOSAL ${proposal.referenceCode}! Total quotation: $${proposal.pricing.totalEstimatedCost.toLocaleString()}. Client notes: "${clientNotes || 'Confirmed and ready for agreement.'}"`,
+          content: `CLIENT ACCEPTED PROPOSAL ${proposal.referenceCode}. Booking ${booking.referenceCode} created with status pending_supplier_confirmation. Awaiting independent supplier confirmations (Aircraft, Yacht, Accommodation). Client notes: "${clientNotes || 'Accepted'}"`,
           category: 'customer_call',
           createdAt: new Date(),
         });

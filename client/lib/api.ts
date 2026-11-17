@@ -9,7 +9,11 @@ import {
   IProposal,
 } from '../types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' && process.env.NODE_ENV === 'production'
+    ? '/api'
+    : 'http://localhost:5000/api');
 
 export class ApiError extends Error {
   statusCode: number;
@@ -23,6 +27,12 @@ export class ApiError extends Error {
   }
 }
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+  return match ? decodeURIComponent(match[3]) : null;
+}
+
 // Helper for fetch with JSON parsing and normalized error handling
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
@@ -30,6 +40,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  // Attach Anti-CSRF token and XMLHttpRequest identifier for security
+  const csrfToken = getCookie('aurelia_csrf');
+  if (csrfToken && !headers.has('X-CSRF-Token')) {
+    headers.set('X-CSRF-Token', csrfToken);
+  }
+  if (!headers.has('X-Requested-With')) {
+    headers.set('X-Requested-With', 'XMLHttpRequest');
   }
 
   try {

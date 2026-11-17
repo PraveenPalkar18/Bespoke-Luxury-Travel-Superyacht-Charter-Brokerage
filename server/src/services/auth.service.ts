@@ -40,7 +40,7 @@ export class AuthService {
     email: string,
     plainPassword: string,
     ctx: RequestContext = {}
-  ): Promise<{ token: string; user: Omit<IUser, 'passwordHash'>; sessionId: string }> {
+  ): Promise<{ token: string; user: Omit<IUser, 'passwordHash'>; sessionId: string; csrfToken: string }> {
     ensureDatabaseConnected();
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -90,11 +90,13 @@ export class AuthService {
     // Create a secure server-side session
     const rawSessionToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawSessionToken).digest('hex');
+    const csrfToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     const session = await SessionModel.create({
       userId: user._id,
       tokenHash,
+      csrfToken,
       ipAddress: ctx.ipAddress,
       userAgent: ctx.userAgent,
       isValid: true,
@@ -132,6 +134,7 @@ export class AuthService {
       token,
       user: userObj as Omit<IUser, 'passwordHash'>,
       sessionId: session._id.toString(),
+      csrfToken,
     };
   }
 

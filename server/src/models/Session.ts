@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
   tokenHash: string;
+  csrfToken?: string;
   ipAddress?: string;
   userAgent?: string;
   isValid: boolean;
@@ -16,6 +17,7 @@ const SessionSchema = new Schema<ISession>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     tokenHash: { type: String, required: true, unique: true, index: true },
+    csrfToken: { type: String, trim: true },
     ipAddress: { type: String, trim: true },
     userAgent: { type: String, trim: true },
     isValid: { type: Boolean, default: true, index: true },

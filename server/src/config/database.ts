@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { config } from './index';
 import { DatabaseUnavailableError } from '../utils/errors';
+import { redactMongoUri } from '../utils/redact';
 import { UserModel } from '../models/User';
 import { AircraftModel } from '../models/Aircraft';
 import { YachtModel } from '../models/Yacht';
@@ -46,22 +47,34 @@ export const autoSeedIfEmpty = async (): Promise<void> => {
   }
 };
 
+let connectionPromise: Promise<boolean> | null = null;
+
 export const connectDatabase = async (): Promise<boolean> => {
-  try {
-    console.log(`[Database] Attempting connection to MongoDB at: ${config.mongoUri}`);
-    await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 4000,
-    });
-    console.log('[Database] MongoDB connection established successfully.');
-    await autoSeedIfEmpty();
+  if (mongoose.connection.readyState === 1) {
     return true;
-  } catch (err: any) {
-    console.warn(
-      `[Database] Note: Could not connect to MongoDB server (${err.message}).`
-    );
-    console.warn(
-      '[Database] Services will return 503 until MongoDB is available at ' + config.mongoUri
-    );
-    return false;
   }
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+  connectionPromise = (async () => {
+    try {
+      console.log(`[Database] Attempting connection to MongoDB at: ${redactMongoUri(config.mongoUri)}`);
+      await mongoose.connect(config.mongoUri, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      console.log('[Database] MongoDB connection established successfully.');
+      await autoSeedIfEmpty();
+      return true;
+    } catch (err: any) {
+      connectionPromise = null;
+      console.warn(
+        `[Database] Note: Could not connect to MongoDB server (${err.message}).`
+      );
+      console.warn(
+        '[Database] Services will return 503 until MongoDB is available at ' + redactMongoUri(config.mongoUri)
+      );
+      return false;
+    }
+  })();
+  return connectionPromise;
 };

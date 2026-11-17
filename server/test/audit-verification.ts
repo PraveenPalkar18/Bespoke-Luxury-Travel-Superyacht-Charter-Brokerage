@@ -1,3 +1,5 @@
+process.env.NODE_ENV = 'test';
+
 import { createApp } from '../src/app';
 import { isValidStatusTransition, VALID_STATUS_TRANSITIONS } from '../src/validators';
 import { InquiryStatus } from '../src/types';
@@ -51,11 +53,13 @@ async function runTestSuite() {
   const baseUrl = `http://127.0.0.1:${port}/api`;
 
   try {
-    // 2.1 Health Check
+    // 2.1 Health Check (distinguishes application health from DB connectivity)
     const healthRes = await fetch(`${baseUrl}/health`);
     const healthData: any = await healthRes.json();
     assert(healthRes.status === 200, 'Health endpoint responds with HTTP 200 OK');
     assert(healthData.status === 'healthy', 'Health check reports status: "healthy"');
+    assert(healthData.application === 'healthy', 'Health check reports application health independently');
+    assert(healthData.database === 'disconnected', 'Health check reports database connectivity status: "disconnected"');
 
     // 2.2 Unauthenticated Route Security (RBAC)
     const inquiriesRes = await fetch(`${baseUrl}/inquiries`);

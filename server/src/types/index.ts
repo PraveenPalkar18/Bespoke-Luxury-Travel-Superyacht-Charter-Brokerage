@@ -247,3 +247,35 @@ export interface IProposal {
   updatedAt: Date;
 }
 
+export type BookingStatus = 'pending_supplier_confirmation' | 'confirmed' | 'cancelled';
+
+export interface ISupplierConfirmation {
+  required: boolean;
+  confirmed: boolean;
+  supplierName?: string;
+  confirmedAt?: Date;
+  confirmedBy?: string;
+  referenceOrContractNumber?: string;
+  notes?: string;
+}
+
+export interface IBooking {
+  _id: string;
+  referenceCode: string;
+  inquiryId: string;
+  proposalId: string;
+  clientName: string;
+  clientEmail: string;
+  assignedBrokerId: string;
+  status: BookingStatus;
+  supplierConfirmations: {
+    aircraft: ISupplierConfirmation;
+    yacht: ISupplierConfirmation;
+    accommodation: ISupplierConfirmation;
+  };
+  totalAmount: number;
+  confirmedAt?: Date;
+  confirmedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

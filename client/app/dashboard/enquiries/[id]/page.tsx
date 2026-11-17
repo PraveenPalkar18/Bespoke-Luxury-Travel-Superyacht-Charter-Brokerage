@@ -23,6 +23,7 @@ import {
   Copy,
   Check,
   Plus,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../../../lib/authContext';
 import {
