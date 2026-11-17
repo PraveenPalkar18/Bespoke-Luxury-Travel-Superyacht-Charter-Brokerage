@@ -17,6 +17,12 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'test' && require.main === m
         console.log(`====================================================`);
     });
 }
-// Export app for both CommonJS (module.exports) and ES module environments (Vercel serverless execution)
-app.default = app;
-module.exports = app;
+// Serverless entrypoint function (2-arity: req, res) delegating to Express
+const handler = (req, res) => {
+    return app(req, res);
+};
+// Expose Express properties & methods on handler for full compatibility
+Object.setPrototypeOf(handler, app);
+handler.default = handler;
+handler.app = app;
+module.exports = handler;
