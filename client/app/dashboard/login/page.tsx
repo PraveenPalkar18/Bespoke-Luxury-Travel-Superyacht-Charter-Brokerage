@@ -36,22 +36,6 @@ export default function BrokerLoginPage() {
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('Password123!');
-    setIsLoading(true);
-    setErrorMessage('');
-
-    try {
-      await login(demoEmail, 'Password123!');
-      router.push('/dashboard');
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Demo login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div
       style={{
@@ -144,7 +128,7 @@ export default function BrokerLoginPage() {
             <input
               type="email"
               required
-              placeholder="e.g. alexander.vance@aureliatravel.com"
+              placeholder="name@aureliatravel.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="luxury-input"
@@ -197,61 +181,7 @@ export default function BrokerLoginPage() {
           </button>
         </form>
 
-        {/* Demo Shortcut Buttons for Testing */}
-        <div style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem' }}>
-          <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem', textAlign: 'center' }}>
-            Instant Testing Credentials
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('alexander.vance@aureliatravel.com')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.65rem 0.85rem',
-                background: '#142236',
-                border: '1px solid rgba(198, 167, 106, 0.2)',
-                borderRadius: '2px',
-                color: '#f7f5f0',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ textAlign: 'left' }}>
-                <span style={{ color: 'var(--color-gold)', fontWeight: 600 }}>Alexander Vance (Admin)</span>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Managing Director & Aviation Lead</div>
-              </div>
-              <span className="badge-navy" style={{ fontSize: '0.65rem' }}>Sign In</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('elena.rostova@aureliatravel.com')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.65rem 0.85rem',
-                background: '#142236',
-                border: '1px solid rgba(198, 167, 106, 0.2)',
-                borderRadius: '2px',
-                color: '#f7f5f0',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ textAlign: 'left' }}>
-                <span style={{ color: 'var(--color-gold)', fontWeight: 600 }}>Elena Rostova (Broker)</span>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Senior Superyacht Charter Broker</div>
-              </div>
-              <span className="badge-navy" style={{ fontSize: '0.65rem' }}>Sign In</span>
-            </button>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '1.75rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem' }}>
           <a href="/" style={{ fontSize: '0.75rem', color: '#64748b' }}>
             &larr; Return to Public Website
           </a>
