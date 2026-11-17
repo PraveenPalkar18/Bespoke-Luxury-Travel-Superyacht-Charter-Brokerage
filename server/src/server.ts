@@ -4,13 +4,12 @@ import { connectDatabase } from './config/database';
 
 const app = createApp();
 
-// Initiate database connection
-connectDatabase().catch((err) => {
-  console.warn('[Database] Connection note:', err.message);
-});
-
-// For local development or standalone execution, bind to port
+// For local development or standalone execution, connect database and bind to port
 if (!process.env.VERCEL && process.env.NODE_ENV !== 'test' && require.main === module) {
+  connectDatabase().catch((err) => {
+    console.warn('[Database] Connection note:', err.message);
+  });
+
   app.listen(config.port, () => {
     console.log(`====================================================`);
     console.log(`  AURELIA & CO. LUXURY TRAVEL BROKERAGE API`);
