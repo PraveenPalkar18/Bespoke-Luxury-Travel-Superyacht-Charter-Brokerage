@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import { getStatsOverview } from '../controllers/stats.controller';
-import { authenticate, requireRole } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/overview', authenticate, requireRole(['admin', 'broker']), getStatsOverview);
+router.get(
+  '/overview',
+  authenticate,
+  requirePermission(['analytics.read.all', 'analytics.read.assigned']),
+  getStatsOverview
+);
 
 export default router;
-

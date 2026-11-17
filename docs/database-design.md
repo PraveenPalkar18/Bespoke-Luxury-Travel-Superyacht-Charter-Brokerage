@@ -18,8 +18,11 @@ interface IUser {
   passwordHash: string;       // bcrypt hashed (12 salt rounds)
   role: 'admin' | 'broker';   // role-based access
   phone?: string;
-  title?: string;             // e.g. "Senior Charter Director"
-  isActive: boolean;          // soft-disable toggle
+  title?: string;             // e.g. "Managing Director", "Charter Broker"
+  isActive: boolean;          // active session authorization toggle
+  lastLogin?: Date;
+  deactivatedAt?: Date;
+  deactivatedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +30,85 @@ interface IUser {
 **Indexes**:
 - `{ email: 1 }` (unique)
 - `{ role: 1, isActive: 1 }`
+
+---
+
+#### 2.1.1 Broker Invitations Collection (`brokerinvitations`)
+Governs single-use onboarding invitation tokens.
+```typescript
+interface IBrokerInvitation {
+  _id: ObjectId;
+  email: string;              // target candidate work email
+  name: string;
+  role: 'broker';
+  phone?: string;
+  title?: string;
+  tokenHash: string;          // SHA-256 hash of random 64-char token (unique index)
+  expiresAt: Date;            // e.g. 7 days
+  isUsed: boolean;            // single-use enforcement
+  usedAt?: Date;
+  isRevoked: boolean;
+  revokedAt?: Date;
+  invitedBy: ObjectId;        // ref to Admin User
+  invitedByName?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+**Indexes**:
+- `{ tokenHash: 1 }` (unique)
+- `{ email: 1, isUsed: 1, isRevoked: 1 }`
+- `{ expiresAt: 1 }`
+
+---
+
+#### 2.1.2 Sessions Collection (`sessions`)
+Tracks active server-side sessions with cryptographic hashes and TTL expiration.
+```typescript
+interface ISession {
+  _id: ObjectId;
+  userId: ObjectId;           // ref to User
+  tokenHash: string;          // SHA-256 hash of session token (unique index)
+  ipAddress?: string;
+  userAgent?: string;
+  isValid: boolean;           // invalidated upon logout or deactivation
+  expiresAt: Date;            // TTL automatic expiration
+  lastActivityAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+**Indexes**:
+- `{ tokenHash: 1 }` (unique)
+- `{ userId: 1, isValid: 1 }`
+- `{ expiresAt: 1 }` (TTL index with `expireAfterSeconds: 0`)
+
+---
+
+#### 2.1.3 Audit Logs Collection (`auditlogs`)
+Persistent non-editable log of sensitive actions, authentication events, and authorization rejections.
+```typescript
+interface IAuditLog {
+  _id: ObjectId;
+  actor: {
+    id?: string;
+    email?: string;
+    name?: string;
+    role?: 'admin' | 'broker' | 'system' | 'anonymous';
+  };
+  action: string;             // e.g. "successful_login", "broker_deactivated", "unauthorized_access_attempt"
+  resourceType: string;       // e.g. "auth", "user", "inquiry", "proposal"
+  resourceId?: string;
+  metadata?: Record<string, any>; // sanitized (no passwords, tokens or secrets)
+  ipAddress?: string;
+  userAgent?: string;
+  timestamp: Date;
+}
+```
+**Indexes**:
+- `{ action: 1, timestamp: -1 }`
+- `{ 'actor.id': 1, timestamp: -1 }`
+- `{ resourceType: 1, resourceId: 1 }`
 
 ---
 
@@ -184,4 +266,67 @@ interface IInquiry {
 - `{ status: 1, createdAt: -1 }`
 - `{ assignedTo: 1, status: 1 }`
 - `{ email: 1 }`
+
+---
+
+#### 2.6 Proposals Collection (`proposals`)
+Stores bespoke travel quotations, allocated fleet assets, day-by-day itineraries, and client digital access tokens.
+```typescript
+interface IItineraryDay {
+  dayNumber: number;
+  title: string;
+  location: string;
+  description: string;
+  highlights: string[];
+  transportMode?: 'private_jet' | 'superyacht' | 'helicopter' | 'chauffeur' | 'leisure';
+  accommodation?: string;
+  image?: string;
+}
+
+interface IProposalPricing {
+  currency: 'USD' | 'EUR' | 'GBP';
+  aircraftCharterPrice?: number;
+  yachtCharterPrice?: number;
+  estimatedAPA?: number;
+  conciergeAndCrewGratuity?: number;
+  taxesAndFees?: number;
+  totalEstimatedCost: number;
+}
+
+interface IProposal {
+  _id: ObjectId;
+  inquiryId: ObjectId;          // ref: Inquiry
+  referenceCode: string;        // e.g. "PROP-2026-8941" (unique index)
+  title: string;
+  destination: string;
+  clientName: string;
+  clientEmail: string;
+  createdById: ObjectId;        // ref: User
+  createdByName: string;
+  status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined' | 'expired';
+  validUntil: Date;
+  clientAccessToken: string;    // secure cryptographically random token (unique index)
+  executiveSummary: string;
+  brokerPersonalNote?: string;
+  aircraft?: IProposalAircraftSpec;
+  yacht?: IProposalYachtSpec;
+  itinerary: IItineraryDay[];
+  pricing: IProposalPricing;
+  inclusions: string[];
+  exclusions: string[];
+  paymentTerms: string;
+  clientFeedback?: {
+    respondedAt?: Date;
+    decision?: 'accepted' | 'declined' | 'requested_changes';
+    clientNotes?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+**Indexes**:
+- `{ referenceCode: 1 }` (unique)
+- `{ clientAccessToken: 1 }` (unique)
+- `{ inquiryId: 1, createdAt: -1 }`
+- `{ status: 1 }`
 

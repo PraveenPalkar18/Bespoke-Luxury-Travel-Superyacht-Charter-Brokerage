@@ -154,41 +154,55 @@ export default function DashboardOverviewPage() {
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Compass size={15} style={{ color: 'var(--color-gold)' }} /> Combined Air & Sea Expeditions
-                </span>
-                <span style={{ color: '#ffffff', fontWeight: 600 }}>{stats?.serviceDistribution?.both ?? 0}</span>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(100, ((stats?.serviceDistribution?.both || 0) / (stats?.totalEnquiries || 1)) * 100)}%`, background: 'var(--color-gold)' }} />
-              </div>
-            </div>
+            {(() => {
+              const serviceDist = stats?.serviceDistribution ?? {
+                private_jet: 0,
+                superyacht: 0,
+                both: 0,
+                other: 0,
+              };
+              const totalCount = stats?.totalEnquiries || 1;
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Plane size={15} style={{ color: 'var(--color-gold)' }} /> Private Aviation Only
-                </span>
-                <span style={{ color: '#ffffff', fontWeight: 600 }}>{stats?.serviceDistribution?.private_jet ?? 0}</span>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(100, ((stats?.serviceDistribution?.private_jet || 0) / (stats?.totalEnquiries || 1)) * 100)}%`, background: '#38bdf8' }} />
-              </div>
-            </div>
+              return (
+                <>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Compass size={15} style={{ color: 'var(--color-gold)' }} /> Combined Air & Sea Expeditions
+                      </span>
+                      <span style={{ color: '#ffffff', fontWeight: 600 }}>{serviceDist.both ?? 0}</span>
+                    </div>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(100, ((serviceDist.both || 0) / totalCount) * 100)}%`, background: 'var(--color-gold)' }} />
+                    </div>
+                  </div>
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Anchor size={15} style={{ color: 'var(--color-gold)' }} /> Superyacht Charters Only
-                </span>
-                <span style={{ color: '#ffffff', fontWeight: 600 }}>{stats?.serviceDistribution?.superyacht ?? 0}</span>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(100, ((stats?.serviceDistribution?.superyacht || 0) / (stats?.totalEnquiries || 1)) * 100)}%`, background: '#34d399' }} />
-              </div>
-            </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Plane size={15} style={{ color: 'var(--color-gold)' }} /> Private Aviation Only
+                      </span>
+                      <span style={{ color: '#ffffff', fontWeight: 600 }}>{serviceDist.private_jet ?? 0}</span>
+                    </div>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(100, ((serviceDist.private_jet || 0) / totalCount) * 100)}%`, background: '#38bdf8' }} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                      <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Anchor size={15} style={{ color: 'var(--color-gold)' }} /> Superyacht Charters Only
+                      </span>
+                      <span style={{ color: '#ffffff', fontWeight: 600 }}>{serviceDist.superyacht ?? 0}</span>
+                    </div>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(100, ((serviceDist.superyacht || 0) / totalCount) * 100)}%`, background: '#34d399' }} />
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 

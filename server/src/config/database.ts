@@ -6,12 +6,14 @@ import { AircraftModel } from '../models/Aircraft';
 import { YachtModel } from '../models/Yacht';
 import { DestinationModel } from '../models/Destination';
 import { InquiryModel } from '../models/Inquiry';
+import { ProposalModel } from '../models/Proposal';
 import {
   getSeedUsers,
   seedAircraft,
   seedYachts,
   seedDestinations,
   seedInquiries,
+  seedProposals,
 } from '../seed/seedData';
 
 export const isDatabaseConnected = (): boolean => {
@@ -36,6 +38,7 @@ export const autoSeedIfEmpty = async (): Promise<void> => {
       await YachtModel.insertMany(seedYachts);
       await DestinationModel.insertMany(seedDestinations);
       await InquiryModel.insertMany(seedInquiries);
+      await ProposalModel.insertMany(seedProposals);
       console.log('[Database Auto-Seed] Complete: Seeding successful.');
     }
   } catch (err: any) {

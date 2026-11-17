@@ -3,14 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { Plane, Anchor, Compass, Phone, ShieldCheck, Menu, X, ArrowRight, Lock } from 'lucide-react';
-import { useAuth } from '../lib/authContext';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -116,46 +114,8 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* CTA and Broker shortcut */}
+        {/* Public Client CTA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }} className="desktop-actions">
-          {user ? (
-            <a
-              href="/dashboard"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                fontSize: '0.75rem',
-                color: 'var(--color-gold)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                border: '1px solid rgba(198, 167, 106, 0.3)',
-                padding: '0.4rem 0.8rem',
-                borderRadius: '2px',
-              }}
-            >
-              <ShieldCheck size={14} />
-              Portal ({user.name.split(' ')[0]})
-            </a>
-          ) : (
-            <a
-              href="/dashboard/login"
-              title="Broker & Partner Portal"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.75rem',
-                color: '#a0aec0',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <Lock size={13} style={{ color: 'var(--color-gold)' }} />
-              Broker Access
-            </a>
-          )}
-
           <a href="/plan" className="btn-gold" style={{ padding: '0.65rem 1.4rem', fontSize: '0.75rem' }}>
             Plan Your Journey
           </a>
@@ -215,19 +175,6 @@ export default function Navbar() {
               style={{ textAlign: 'center', width: '100%' }}
             >
               Plan Your Journey
-            </a>
-            <a
-              href="/dashboard/login"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                textAlign: 'center',
-                fontSize: '0.8rem',
-                color: 'var(--color-gold)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Broker Portal Login
             </a>
           </div>
         </div>

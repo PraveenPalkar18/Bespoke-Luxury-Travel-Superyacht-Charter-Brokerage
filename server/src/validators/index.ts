@@ -141,3 +141,101 @@ export const destinationSchema = z.object({
   isPublished: z.boolean().default(true),
   featured: z.boolean().default(false),
 });
+
+export const itineraryDaySchema = z.object({
+  dayNumber: z.number().int().min(1),
+  title: z.string().min(2, 'Day title required'),
+  location: z.string().min(2, 'Location required'),
+  description: z.string().min(10, 'Description required'),
+  highlights: z.array(z.string()).default([]),
+  transportMode: z
+    .enum(['private_jet', 'superyacht', 'helicopter', 'chauffeur', 'leisure'])
+    .default('leisure'),
+  accommodation: z.string().optional(),
+  image: z.string().optional(),
+});
+
+export const proposalPricingSchema = z.object({
+  currency: z.enum(['USD', 'EUR', 'GBP']).default('USD'),
+  aircraftCharterPrice: z.number().nonnegative().optional(),
+  yachtCharterPrice: z.number().nonnegative().optional(),
+  estimatedAPA: z.number().nonnegative().optional(),
+  conciergeAndCrewGratuity: z.number().nonnegative().optional(),
+  taxesAndFees: z.number().nonnegative().optional(),
+  totalEstimatedCost: z.number().positive('Total estimated quotation amount is required'),
+});
+
+export const createProposalSchema = z.object({
+  inquiryId: z.string().min(1, 'Inquiry reference is required'),
+  title: z.string().min(3, 'Proposal title is required'),
+  destination: z.string().min(2, 'Destination is required'),
+  clientName: z.string().min(2, 'Client name is required'),
+  clientEmail: z.string().email('Valid client email is required'),
+  validUntil: z.string().min(4, 'Validity date is required'),
+  executiveSummary: z.string().min(15, 'Executive summary is required'),
+  brokerPersonalNote: z.string().optional(),
+  aircraft: z
+    .object({
+      aircraftId: z.string().optional(),
+      name: z.string(),
+      model: z.string(),
+      category: z.string(),
+      departureFBO: z.string().optional(),
+      arrivalFBO: z.string().optional(),
+      flightHours: z.number().optional(),
+      passengerCount: z.number().optional(),
+      featuredImage: z.string().optional(),
+    })
+    .optional(),
+  yacht: z
+    .object({
+      yachtId: z.string().optional(),
+      name: z.string(),
+      builder: z.string(),
+      lengthFeet: z.number(),
+      embarkationPort: z.string(),
+      disembarkationPort: z.string(),
+      charterDays: z.number(),
+      guestCount: z.number().optional(),
+      featuredImage: z.string().optional(),
+    })
+    .optional(),
+  itinerary: z.array(itineraryDaySchema).min(1, 'At least one itinerary day is required'),
+  pricing: proposalPricingSchema,
+  inclusions: z.array(z.string()).default([]),
+  exclusions: z.array(z.string()).default([]),
+  paymentTerms: z.string().optional(),
+});
+
+export const updateProposalSchema = createProposalSchema.partial().extend({
+  status: z.enum(['draft', 'sent', 'viewed', 'accepted', 'declined', 'expired']).optional(),
+});
+
+export const clientResponseSchema = z.object({
+  decision: z.enum(['accepted', 'declined', 'requested_changes']),
+  clientNotes: z.string().optional(),
+});
+
+export const inviteBrokerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Valid work email address is required'),
+  phone: z.string().optional(),
+  title: z.string().optional().default('Charter Broker'),
+});
+
+export const acceptInviteSchema = z.object({
+  token: z.string().min(10, 'Valid invitation token is required'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+});
+
+export const updateBrokerStatusSchema = z.object({
+  isActive: z.boolean(),
+  reason: z.string().optional(),
+});
+

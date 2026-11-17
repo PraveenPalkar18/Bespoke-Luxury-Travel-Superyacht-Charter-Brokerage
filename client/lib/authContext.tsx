@@ -2,16 +2,17 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { IUser } from '../types';
-import { loginApi, fetchMe } from './api';
+import { loginApi, logoutApi, fetchMe } from './api';
 
 interface AuthContextType {
   user: IUser | null;
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAdmin: boolean;
   isBroker: boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,31 +23,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('aurelia_auth_token');
-    const storedUser = localStorage.getItem('aurelia_auth_user');
+    async function initializeAuth() {
+      const storedToken = localStorage.getItem('aurelia_auth_token');
+      const storedUser = localStorage.getItem('aurelia_auth_user');
 
-    if (storedToken && storedUser) {
+      if (storedToken && storedUser) {
+        try {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        } catch {}
+      }
+
+      // Verify session via cookie or token
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        // Verify token in background
-        fetchMe(storedToken)
-          .then((verified) => {
-            setUser(verified);
-            localStorage.setItem('aurelia_auth_user', JSON.stringify(verified));
-          })
-          .catch(() => {
-            // Token expired or invalid
-            logout();
-          })
-          .finally(() => setIsLoading(false));
-      } catch {
-        logout();
+        const verified = await fetchMe(storedToken || undefined);
+        setUser(verified);
+        if (storedToken) {
+          localStorage.setItem('aurelia_auth_user', JSON.stringify(verified));
+        }
+      } catch (err) {
+        // If verification fails, clear any invalid session
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('aurelia_auth_token');
+        localStorage.removeItem('aurelia_auth_user');
+      } finally {
         setIsLoading(false);
       }
-    } else {
-      setIsLoading(false);
     }
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -62,7 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await logoutApi(token || undefined);
+    } catch {}
     setToken(null);
     setUser(null);
     localStorage.removeItem('aurelia_auth_token');
@@ -71,6 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = user?.role === 'admin';
   const isBroker = user?.role === 'broker' || isAdmin;
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return user.permissions?.includes(permission) || false;
+  };
 
   return (
     <AuthContext.Provider
@@ -82,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         isAdmin,
         isBroker,
+        hasPermission,
       }}
     >
       {children}
@@ -96,4 +112,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

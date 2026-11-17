@@ -10,6 +10,9 @@ const UserSchema = new Schema<IUser>(
     title: { type: String, trim: true },
     phone: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
+    lastLogin: { type: Date },
+    deactivatedAt: { type: Date },
+    deactivatedBy: { type: String, trim: true },
   },
   { timestamps: true }
 );

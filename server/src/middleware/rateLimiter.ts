@@ -5,6 +5,10 @@ export const authLimiter = rateLimit({
   max: 5, // 5 requests per window
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false },
+  keyGenerator: (req) => {
+    return (req.headers['x-forwarded-for'] as string) || req.ip || '127.0.0.1';
+  },
   message: {
     success: false,
     error: 'TooManyRequests',

@@ -104,6 +104,24 @@ async function runTestSuite() {
     }
     assert(rateLimitedTriggered, 'Auth rate limiter successfully blocked brute-force login attempts (> 5 attempts)');
 
+    // 2.5 Proposals & Quotations Route Security
+    console.log('\n[Suite 4] Proposals & Itinerary Engine Security:');
+    const proposalsRes = await fetch(`${baseUrl}/proposals/inquiry/dummy_id`);
+    assert(proposalsRes.status === 401, 'Protected /api/proposals/inquiry/:id rejects unauthenticated access with HTTP 401');
+
+    const createProposalRes = await fetch(`${baseUrl}/proposals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert(createProposalRes.status === 401, 'Protected POST /api/proposals rejects unauthenticated creation with HTTP 401');
+
+    const publicTokenRes = await fetch(`${baseUrl}/proposals/public/unknown-token-123`);
+    assert(
+      publicTokenRes.status === 404 || publicTokenRes.status === 503,
+      'Public proposal endpoint responds safely without leaking unauthorized records'
+    );
+
   } finally {
     testServer.close();
   }

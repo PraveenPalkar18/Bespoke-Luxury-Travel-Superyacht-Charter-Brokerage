@@ -5,6 +5,7 @@ import yachtRoutes from './yacht.routes';
 import destinationRoutes from './destination.routes';
 import inquiryRoutes from './inquiry.routes';
 import statsRoutes from './stats.routes';
+import proposalRoutes from './proposal.routes';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use('/yachts', yachtRoutes);
 router.use('/destinations', destinationRoutes);
 router.use('/inquiries', inquiryRoutes);
 router.use('/stats', statsRoutes);
+router.use('/proposals', proposalRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

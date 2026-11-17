@@ -627,3 +627,148 @@ export const seedInquiries = [
   },
 ];
 
+export const seedProposals = [
+  {
+    _id: '672400000000000000000601',
+    inquiryId: '672400000000000000000401',
+    referenceCode: 'PROP-2026-8941',
+    title: 'The Riviera & Monegasque Grand Sovereign Voyage',
+    destination: 'Monaco & The French Riviera',
+    clientName: 'Lord Evelyn Sterling',
+    clientEmail: 'sterling@sterlingfamilyoffice.co.uk',
+    createdById: '672400000000000000000002',
+    createdByName: 'Elena Rostova',
+    status: 'sent' as const,
+    validUntil: new Date('2026-12-31T23:59:59Z'),
+    clientAccessToken: 'aurelia-vip-sterling-monaco-2026',
+    executiveSummary:
+      'An exquisite 7-day private aviation and superyacht expedition combining non-stop flight aboard the Gulfstream G700 from London Farnborough with bespoke cruising aboard the 90m Oceanco M/Y Elysian Crest across Saint-Jean-Cap-Ferrat, Cannes, and Port Hercule, Monaco.',
+    brokerPersonalNote:
+      'Dear Evelyn, following our consultation with your family office director, I have provisionally reserved prime stern-to berth slots in Port Hercule and secured your preferred Gulfstream G700 configuration. The onboard culinary master has prepared a sample tasting menu for your approval.',
+    aircraft: {
+      aircraftId: '672400000000000000000101',
+      name: 'Gulfstream G700',
+      model: 'G700-ER Ultra Long-Range',
+      category: 'Ultra Long-Range',
+      departureFBO: 'Farnborough Airport (EGLF / TAG Aviation)',
+      arrivalFBO: 'Nice Côte d’Azur (LFMN / Signature Flight Support)',
+      flightHours: 2.2,
+      passengerCount: 8,
+      featuredImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=85',
+    },
+    yacht: {
+      yachtId: '672400000000000000000201',
+      name: 'M/Y ELYSIAN CREST',
+      builder: 'Oceanco Custom',
+      lengthFeet: 295,
+      embarkationPort: 'Port Hercule, Monaco',
+      disembarkationPort: 'Port de Saint-Tropez',
+      charterDays: 7,
+      guestCount: 8,
+      featuredImage: 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d17?auto=format&fit=crop&w=1600&q=85',
+    },
+    itinerary: [
+      {
+        dayNumber: 1,
+        title: 'Private Aviation Arrival & Monaco Helipad Embarkation',
+        location: 'London Farnborough to Port Hercule, Monaco',
+        description:
+          'Private apron limousine boarding at Farnborough TAG Aviation. Non-stop flight aboard the Gulfstream G700 with vintage champagne service. Upon arrival at Nice Côte d’Azur, direct Airbus H145 helicopter transfer landing directly on the commercial helipad of M/Y Elysian Crest in Monaco.',
+        highlights: [
+          'VIP ramp transfer with zero terminal wait time',
+          'Tarmac-to-yacht helicopter transit over Monaco bay',
+          'Welcome sunset cocktail reception on Elysian Crest bridge deck',
+        ],
+        transportMode: 'private_jet' as const,
+        accommodation: 'Master Penthouse Stateroom, M/Y Elysian Crest',
+        image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=85',
+      },
+      {
+        dayNumber: 2,
+        title: 'Cruising Saint-Jean-Cap-Ferrat & Paloma Beach Anchorage',
+        location: 'Monaco to Saint-Jean-Cap-Ferrat',
+        description:
+          'Morning cruise along the dramatic limestone cliffs of the French Riviera. Drop anchor in the sheltered bay of Paloma Beach. Afternoon private access to Villa Ephrussi de Rothschild gardens followed by an alfresco seafood tasting on the aft deck.',
+        highlights: [
+          'Anchor at secluded Cap Ferrat cove',
+          'Private Seabob & Fliteboard aquatic excursion',
+          'Seven-course Mediterranean tasting dinner by Executive Chef',
+        ],
+        transportMode: 'superyacht' as const,
+        accommodation: 'M/Y Elysian Crest',
+        image: 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d17?auto=format&fit=crop&w=1600&q=85',
+      },
+      {
+        dayNumber: 3,
+        title: 'Îles de Lérins & Cannes Bay Sunset',
+        location: 'Cannes & Îles de Lérins',
+        description:
+          'Wake to tranquil crystal waters off the private island of Sainte-Marguerite. Enjoy a sommelier-curated wine tasting in the ancient fortress monastery. Late afternoon cruise into the vibrant bay of Cannes.',
+        highlights: [
+          'Private historical tour of Royal Fort cellars',
+          'Sunset champagne cruise past Boulevard de la Croisette',
+          'Tender service to La Guérite for exclusive dining',
+        ],
+        transportMode: 'superyacht' as const,
+        accommodation: 'M/Y Elysian Crest',
+        image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1600&q=85',
+      },
+      {
+        dayNumber: 4,
+        title: 'Submersible Deep Dive & Pampelonne Bay Gala',
+        location: 'Saint-Tropez & Ramatuelle',
+        description:
+          'Subsurface marine exploration using the Triton 3300/3 private submersible to depths of 300 meters. Anchor off Pampelonne Beach for a private beach club cabana setup followed by an evening deck gala.',
+        highlights: [
+          'Private pilot deep dive in underwater sanctuary',
+          'VIP seaside cabana at Club 55 with private security',
+          'Onboard starlight cinema screening on the sun deck',
+        ],
+        transportMode: 'superyacht' as const,
+        accommodation: 'M/Y Elysian Crest',
+        image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1600&q=85',
+      },
+      {
+        dayNumber: 5,
+        title: 'Disembarkation & Sovereign Return',
+        location: 'Port de Saint-Tropez to London Farnborough',
+        description:
+          'Final champagne breakfast on the sundeck. Chauffeur transfer to Cannes-Mandelieu or Nice Côte d’Azur for return Gulfstream G700 flight back to London Farnborough with dedicated customs clearance.',
+        highlights: [
+          'Leisurely sundeck breakfast overlooking Saint-Tropez old town',
+          'Private Mercedes-Maybach transfer to private aviation ramp',
+          'Non-stop return flight arriving in London in pure serenity',
+        ],
+        transportMode: 'private_jet' as const,
+        accommodation: 'Residence',
+        image: 'https://images.unsplash.com/photo-1517400508447-f8dd518b86db?auto=format&fit=crop&w=1600&q=85',
+      },
+    ],
+    pricing: {
+      currency: 'USD' as const,
+      aircraftCharterPrice: 65000,
+      yachtCharterPrice: 350000,
+      estimatedAPA: 105000,
+      conciergeAndCrewGratuity: 35000,
+      taxesAndFees: 25000,
+      totalEstimatedCost: 580000,
+    },
+    inclusions: [
+      'Roundtrip private flight aboard Gulfstream G700 from London Farnborough to Nice Côte d’Azur',
+      'VIP tarmac apron greeting with private customs clearance and direct helicopter transfer to yacht helipad',
+      '7-night exclusive charter of 90m Oceanco M/Y Elysian Crest with 28 elite crew',
+      'Dedicated Michelin-trained executive private chef on board catering all bespoke dining',
+      'Unlimited access to onboard Triton submersible, Fliteboards, and tender chase boat',
+      '24/7 dedicated Aurelia & Co. Senior Concierge Director on standby',
+    ],
+    exclusions: [
+      'Special vintage fine wines & rare spirits exceeding standard provisioning allowance',
+      'Off-yacht helicopter charter excursions beyond scheduled transfers',
+    ],
+    paymentTerms:
+      '50% deposit upon formal charter agreement execution. Balance and estimated APA due 30 days prior to departure.',
+    createdAt: new Date('2026-11-08T14:00:00Z'),
+    updatedAt: new Date('2026-11-08T14:30:00Z'),
+  },
+];
+

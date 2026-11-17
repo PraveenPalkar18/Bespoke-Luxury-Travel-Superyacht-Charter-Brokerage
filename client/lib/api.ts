@@ -6,6 +6,7 @@ import {
   IOverviewStats,
   IUser,
   PaginatedResult,
+  IProposal,
 } from '../types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -32,7 +33,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   try {
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, { ...options, headers, credentials: 'include' });
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
@@ -145,18 +146,113 @@ export async function loginApi(email: string, password: string): Promise<{ token
   return { token, user, message: res.message || 'Authentication successful' };
 }
 
-export async function fetchMe(token: string): Promise<IUser> {
+export async function logoutApi(token?: string): Promise<boolean> {
+  try {
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    await request<any>(`/auth/logout`, {
+      method: 'POST',
+      headers,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchMe(token?: string): Promise<IUser> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const res = await request<{ success: boolean; data: IUser }>(`/auth/me`, {
+    headers,
+  });
+  return res.data;
+}
+
+export async function fetchBrokers(token: string): Promise<IUser[]> {
+  const res = await request<{ success: boolean; data: IUser[] }>(`/auth/brokers`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
 }
 
-export async function fetchBrokers(token: string): Promise<Array<{ id: string; name: string; email: string; role: string; title?: string }>> {
-  const res = await request<{ success: boolean; data: any[] }>(`/auth/brokers`, {
+export async function inviteBrokerApi(
+  token: string,
+  data: { name: string; email: string; phone?: string; title?: string }
+): Promise<{ id: string; email: string; name: string; expiresAt: string; inviteUrl: string; inviteToken?: string }> {
+  const res = await request<{ success: boolean; data: any }>(`/auth/invite`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function fetchPendingInvitations(token: string): Promise<any[]> {
+  const res = await request<{ success: boolean; data: any[] }>(`/auth/invitations/pending`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
+}
+
+export async function revokeInvitationApi(token: string, id: string): Promise<boolean> {
+  const res = await request<{ success: boolean }>(`/auth/invitations/${id}/revoke`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.success;
+}
+
+export async function updateBrokerStatusApi(
+  token: string,
+  id: string,
+  isActive: boolean,
+  reason?: string
+): Promise<IUser> {
+  const res = await request<{ success: boolean; data: IUser }>(`/auth/brokers/${id}/status`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ isActive, reason }),
+  });
+  return res.data;
+}
+
+export async function fetchInvitationDetails(rawToken: string): Promise<{
+  email: string;
+  name: string;
+  title?: string;
+  expiresAt: string;
+}> {
+  const res = await request<{ success: boolean; data: any }>(`/auth/invite/${rawToken}`);
+  return res.data;
+}
+
+export async function acceptInvitationApi(
+  rawToken: string,
+  password: string
+): Promise<{ user: IUser; message: string }> {
+  const res = await request<{ success: boolean; data: IUser; message: string }>(`/auth/accept-invite`, {
+    method: 'POST',
+    body: JSON.stringify({ token: rawToken, password }),
+  });
+  return { user: res.data, message: res.message };
+}
+
+export async function fetchAuditLogs(
+  token: string,
+  params?: { limit?: number; skip?: number; action?: string; resourceType?: string }
+): Promise<{ logs: any[]; total: number }> {
+  const query = new URLSearchParams();
+  if (params?.limit) query.set('limit', params.limit.toString());
+  if (params?.skip) query.set('skip', params.skip.toString());
+  if (params?.action) query.set('action', params.action);
+  if (params?.resourceType) query.set('resourceType', params.resourceType);
+  const qStr = query.toString() ? `?${query.toString()}` : '';
+
+  const res = await request<{ success: boolean; data: any[]; total: number }>(`/auth/audit-logs${qStr}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return { logs: res.data, total: res.total };
 }
 
 // --- BROKER DASHBOARD ENDPOINTS ---
@@ -279,6 +375,74 @@ export async function updateDestinationApi(token: string, id: string, data: Part
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+// --- PROPOSALS & ITINERARIES ENDPOINTS ---
+
+export async function fetchProposalsByInquiry(token: string, inquiryId: string): Promise<IProposal[]> {
+  const res = await request<{ success: boolean; data: IProposal[] }>(`/proposals/inquiry/${inquiryId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function fetchProposalById(token: string, id: string): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function createProposalApi(token: string, data: any): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function updateProposalApi(token: string, id: string, data: any): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals/${id}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return res.data;
+}
+
+export async function sendProposalApi(token: string, id: string): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals/${id}/send`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function deleteProposalApi(token: string, id: string): Promise<boolean> {
+  const res = await request<{ success: boolean }>(`/proposals/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.success;
+}
+
+// Client Public Presentation
+export async function fetchPublicProposal(token: string): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals/public/${token}`);
+  return res.data;
+}
+
+export async function respondToPublicProposal(
+  token: string,
+  decision: 'accepted' | 'declined' | 'requested_changes',
+  clientNotes?: string
+): Promise<IProposal> {
+  const res = await request<{ success: boolean; data: IProposal }>(`/proposals/public/${token}/respond`, {
+    method: 'POST',
+    body: JSON.stringify({ decision, clientNotes }),
   });
   return res.data;
 }

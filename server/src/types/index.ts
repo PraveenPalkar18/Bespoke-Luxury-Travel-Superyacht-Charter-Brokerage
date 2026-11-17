@@ -9,6 +9,9 @@ export interface IUser {
   title?: string;
   phone?: string;
   isActive: boolean;
+  lastLogin?: Date;
+  deactivatedAt?: Date;
+  deactivatedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -148,6 +151,8 @@ export interface AuthUserPayload {
   email: string;
   role: UserRole;
   name: string;
+  sessionId?: string;
+  permissions?: string[];
 }
 
 export interface PaginationMetadata {
@@ -162,5 +167,83 @@ export interface PaginationMetadata {
 export interface PaginatedResult<T> {
   data: T[];
   pagination: PaginationMetadata;
+}
+
+export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined' | 'expired';
+
+export interface IItineraryDay {
+  dayNumber: number;
+  title: string;
+  location: string;
+  description: string;
+  highlights: string[];
+  transportMode?: 'private_jet' | 'superyacht' | 'helicopter' | 'chauffeur' | 'leisure';
+  accommodation?: string;
+  image?: string;
+}
+
+export interface IProposalPricing {
+  currency: 'USD' | 'EUR' | 'GBP';
+  aircraftCharterPrice?: number;
+  yachtCharterPrice?: number;
+  estimatedAPA?: number;
+  conciergeAndCrewGratuity?: number;
+  taxesAndFees?: number;
+  totalEstimatedCost: number;
+}
+
+export interface IProposalAircraftSpec {
+  aircraftId?: string;
+  name: string;
+  model: string;
+  category: string;
+  departureFBO?: string;
+  arrivalFBO?: string;
+  flightHours?: number;
+  passengerCount?: number;
+  featuredImage?: string;
+}
+
+export interface IProposalYachtSpec {
+  yachtId?: string;
+  name: string;
+  builder: string;
+  lengthFeet: number;
+  embarkationPort: string;
+  disembarkationPort: string;
+  charterDays: number;
+  guestCount?: number;
+  featuredImage?: string;
+}
+
+export interface IProposal {
+  _id: string;
+  inquiryId: string;
+  referenceCode: string;
+  title: string;
+  destination: string;
+  clientName: string;
+  clientEmail: string;
+  createdById: string;
+  createdByName: string;
+  status: ProposalStatus;
+  validUntil: Date;
+  clientAccessToken: string;
+  executiveSummary: string;
+  brokerPersonalNote?: string;
+  aircraft?: IProposalAircraftSpec;
+  yacht?: IProposalYachtSpec;
+  itinerary: IItineraryDay[];
+  pricing: IProposalPricing;
+  inclusions: string[];
+  exclusions: string[];
+  paymentTerms: string;
+  clientFeedback?: {
+    respondedAt?: Date;
+    decision?: 'accepted' | 'declined' | 'requested_changes';
+    clientNotes?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Shield, ArrowRight, UserCheck, KeyRound } from 'lucide-react';
+import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
 
 export default function BrokerLoginPage() {
@@ -11,6 +11,7 @@ export default function BrokerLoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -29,7 +30,7 @@ export default function BrokerLoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed. Please verify credentials.');
+      setErrorMessage(err.message || 'Invalid email or password credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -155,15 +156,35 @@ export default function BrokerLoginPage() {
             <label style={{ display: 'block', fontSize: '0.725rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600 }}>
               Security Password
             </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="luxury-input"
-              style={{ fontSize: '0.9rem' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="luxury-input"
+                style={{ fontSize: '0.9rem', width: '100%', paddingRight: '2.5rem' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -239,4 +260,3 @@ export default function BrokerLoginPage() {
     </div>
   );
 }
-

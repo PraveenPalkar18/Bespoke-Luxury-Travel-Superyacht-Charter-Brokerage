@@ -1,8 +1,9 @@
 import { InquiryModel } from '../models/Inquiry';
-import { IInquiry, IInternalNote, InquiryStatus, PaginatedResult } from '../types';
+import { IInquiry, IInternalNote, InquiryStatus, PaginatedResult, AuthUserPayload } from '../types';
 import { ensureDatabaseConnected } from '../config/database';
-import { NotFoundError, BadRequestError } from '../utils/errors';
+import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
 import { isValidStatusTransition, VALID_STATUS_TRANSITIONS } from '../validators';
+import { auditService } from './audit.service';
 
 export interface InquiryFilterOptions {
   status?: InquiryStatus;
@@ -31,10 +32,26 @@ export class InquiryService {
     };
 
     const created = await InquiryModel.create(inquiryPayload);
+
+    await auditService.log({
+      actor: { role: 'anonymous', name: data.customerName, email: data.email },
+      action: 'enquiry_created',
+      resourceType: 'inquiry',
+      resourceId: created._id.toString(),
+      metadata: {
+        referenceCode,
+        destination: data.destination,
+        requestedServices: data.requestedServices,
+      },
+    });
+
     return created.toObject() as IInquiry;
   }
 
-  async getAll(options: InquiryFilterOptions = {}): Promise<PaginatedResult<IInquiry>> {
+  async getAll(
+    options: InquiryFilterOptions = {},
+    requestingUser?: AuthUserPayload
+  ): Promise<PaginatedResult<IInquiry>> {
     ensureDatabaseConnected();
 
     const page = Math.max(1, options.page || 1);
@@ -45,9 +62,16 @@ export class InquiryService {
     if (options.status) {
       query.status = options.status;
     }
-    if (options.assignedTo) {
+
+    // RESOURCE-LEVEL AUTHORIZATION:
+    // Brokers can strictly only query their assigned enquiries!
+    if (requestingUser && requestingUser.role === 'broker') {
+      query.assignedTo = requestingUser.id;
+    } else if (options.assignedTo) {
+      // Admin can filter by broker if requested
       query.assignedTo = options.assignedTo;
     }
+
     if (options.search) {
       const searchRegex = new RegExp(options.search.trim(), 'i');
       query.$or = [
@@ -83,21 +107,62 @@ export class InquiryService {
     };
   }
 
-  async getById(id: string): Promise<IInquiry> {
+  async getById(id: string, requestingUser?: AuthUserPayload): Promise<IInquiry> {
     ensureDatabaseConnected();
     const inquiry = await InquiryModel.findById(id).lean();
     if (!inquiry) {
       throw new NotFoundError(`Enquiry dossier not found with identifier: ${id}`);
     }
+
+    // RESOURCE-LEVEL AUTHORIZATION:
+    // If requesting user is a broker, verify assignment
+    if (requestingUser && requestingUser.role === 'broker') {
+      const isAssigned = inquiry.assignedTo?.toString() === requestingUser.id;
+      if (!isAssigned) {
+        await auditService.log({
+          actor: { id: requestingUser.id, email: requestingUser.email, name: requestingUser.name, role: requestingUser.role },
+          action: 'unauthorized_access_attempt',
+          resourceType: 'inquiry',
+          resourceId: id,
+          metadata: { attemptedAction: 'view_enquiry', actualAssignedTo: inquiry.assignedTo },
+        });
+        throw new ForbiddenError('Access denied: You are not authorized to view this confidential enquiry.');
+      }
+    }
+
     return inquiry as unknown as IInquiry;
   }
 
-  async update(id: string, updateData: Partial<IInquiry>): Promise<IInquiry> {
+  async update(
+    id: string,
+    updateData: Partial<IInquiry>,
+    requestingUser?: AuthUserPayload
+  ): Promise<IInquiry> {
     ensureDatabaseConnected();
 
     const current = await InquiryModel.findById(id);
     if (!current) {
       throw new NotFoundError(`Enquiry dossier not found with identifier: ${id}`);
+    }
+
+    // RESOURCE-LEVEL AUTHORIZATION:
+    if (requestingUser && requestingUser.role === 'broker') {
+      const isAssigned = current.assignedTo?.toString() === requestingUser.id;
+      if (!isAssigned) {
+        await auditService.log({
+          actor: { id: requestingUser.id, email: requestingUser.email, name: requestingUser.name, role: requestingUser.role },
+          action: 'unauthorized_access_attempt',
+          resourceType: 'inquiry',
+          resourceId: id,
+          metadata: { attemptedAction: 'update_enquiry' },
+        });
+        throw new ForbiddenError('Access denied: You are not authorized to modify this enquiry.');
+      }
+
+      // Brokers cannot reassign enquiries to other brokers
+      if (updateData.assignedTo && updateData.assignedTo !== current.assignedTo?.toString()) {
+        throw new ForbiddenError('Brokers are not authorized to reassign enquiries. Contact the Managing Director.');
+      }
     }
 
     // Enforce state transition rules
@@ -109,6 +174,33 @@ export class InquiryService {
           `Invalid inquiry status transition from "${current.status}" to "${updateData.status}". Permitted transitions: ${allowed.join(', ') || 'None'}.`
         );
       }
+
+      await auditService.log({
+        actor: requestingUser
+          ? { id: requestingUser.id, email: requestingUser.email, name: requestingUser.name, role: requestingUser.role }
+          : { role: 'system' },
+        action: 'enquiry_status_updated',
+        resourceType: 'inquiry',
+        resourceId: id,
+        metadata: { fromStatus: current.status, toStatus: updateData.status },
+      });
+    }
+
+    // Audit assignment changes
+    if (updateData.assignedTo && updateData.assignedTo !== current.assignedTo?.toString()) {
+      await auditService.log({
+        actor: requestingUser
+          ? { id: requestingUser.id, email: requestingUser.email, name: requestingUser.name, role: requestingUser.role }
+          : { role: 'system' },
+        action: 'enquiry_assigned',
+        resourceType: 'inquiry',
+        resourceId: id,
+        metadata: {
+          previousAssignedTo: current.assignedTo,
+          newAssignedTo: updateData.assignedTo,
+          assignedBrokerName: updateData.assignedBrokerName,
+        },
+      });
     }
 
     Object.assign(current, updateData);
@@ -120,9 +212,30 @@ export class InquiryService {
   async addNote(
     id: string,
     noteData: { content: string; category?: 'internal' | 'supplier' | 'customer_call' },
-    author: { id: string; name: string }
+    author: { id: string; name: string },
+    requestingUser?: AuthUserPayload
   ): Promise<IInquiry> {
     ensureDatabaseConnected();
+
+    const current = await InquiryModel.findById(id);
+    if (!current) {
+      throw new NotFoundError(`Enquiry dossier not found with identifier: ${id}`);
+    }
+
+    // RESOURCE-LEVEL AUTHORIZATION:
+    if (requestingUser && requestingUser.role === 'broker') {
+      const isAssigned = current.assignedTo?.toString() === requestingUser.id;
+      if (!isAssigned) {
+        await auditService.log({
+          actor: { id: requestingUser.id, email: requestingUser.email, name: requestingUser.name, role: requestingUser.role },
+          action: 'unauthorized_access_attempt',
+          resourceType: 'inquiry',
+          resourceId: id,
+          metadata: { attemptedAction: 'add_internal_note' },
+        });
+        throw new ForbiddenError('Access denied: You cannot add notes to an enquiry not assigned to you.');
+      }
+    }
 
     const note: Partial<IInternalNote> = {
       authorId: author.id,
@@ -132,19 +245,11 @@ export class InquiryService {
       createdAt: new Date(),
     };
 
-    const updated = await InquiryModel.findByIdAndUpdate(
-      id,
-      { $push: { internalNotes: note } },
-      { new: true, runValidators: true }
-    ).lean();
+    current.internalNotes.push(note as any);
+    await current.save();
 
-    if (!updated) {
-      throw new NotFoundError(`Enquiry dossier not found with identifier: ${id}`);
-    }
-
-    return updated as unknown as IInquiry;
+    return current.toObject() as IInquiry;
   }
 }
 
 export const inquiryService = new InquiryService();
-

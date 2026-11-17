@@ -8,10 +8,12 @@
     "build": "node ./node_modules/typescript/bin/tsc",
     "start": "node dist/server.js",
     "seed": "node ./node_modules/ts-node-dev/lib/bin.js --transpile-only src/seed/seed.ts",
-    "test": "node ./node_modules/ts-node/dist/bin.js test/audit-verification.ts"
+    "test": "node ./node_modules/ts-node/dist/bin.js test/audit-verification.ts && node ./node_modules/ts-node/dist/bin.js -T test/auth-security-verification.ts"
   },
   "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",

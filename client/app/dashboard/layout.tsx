@@ -12,6 +12,8 @@ import {
   Shield,
   Layers,
   User,
+  Users,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 
@@ -51,10 +53,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // Admin-only route guard for /dashboard/brokers
+  if (pathname.startsWith('/dashboard/brokers') && user.role !== 'admin') {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#070d15', color: '#f7f5f0', display: 'flex', flexDirection: 'column' }}>
+        <header style={{ backgroundColor: '#0a121e', borderBottom: '1px solid rgba(198, 167, 106, 0.25)', padding: '0.85rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.3rem', color: '#ffffff', fontWeight: 600 }}>
+              AURELIA <span style={{ color: 'var(--color-gold)' }}>&</span> CO.
+            </span>
+          </a>
+          <button onClick={() => router.push('/dashboard')} className="btn-outline-gold" style={{ fontSize: '0.8rem' }}>
+            Return to Dashboard
+          </button>
+        </header>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', color: '#f87171' }}>
+            <Lock size={30} />
+          </div>
+          <div className="gold-label" style={{ marginBottom: '0.5rem' }}>Access Restricted &bull; HTTP 403</div>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', color: '#ffffff', marginBottom: '1rem' }}>
+            Managing Director Privileges Required
+          </h2>
+          <p style={{ maxWidth: '520px', color: '#94a3b8', lineHeight: '1.7', fontSize: '0.9rem', marginBottom: '2rem' }}>
+            Broker onboarding, credential governance, and operational deactivation are reserved exclusively for the Managing Director desk.
+          </p>
+          <a href="/dashboard" className="btn-gold" style={{ fontSize: '0.85rem' }}>
+            Return to Authorized Pipeline
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const navItems = [
     { name: 'Overview', href: '/dashboard', icon: <LayoutDashboard size={17} /> },
     { name: 'Enquiries Pipeline', href: '/dashboard/enquiries', icon: <Inbox size={17} /> },
     { name: 'Catalogue & Fleet', href: '/dashboard/catalogue', icon: <Layers size={17} /> },
+    ...(user.role === 'admin'
+      ? [{ name: 'Brokers & Team', href: '/dashboard/brokers', icon: <Users size={17} /> }]
+      : []),
   ];
 
   return (

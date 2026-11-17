@@ -29,13 +29,16 @@ export const getAllInquiries = async (req: AuthenticatedRequest, res: Response, 
   try {
     const { status, search, assignedTo, page, limit } = req.query;
 
-    const result = await inquiryService.getAll({
-      status: status as InquiryStatus,
-      search: search as string,
-      assignedTo: assignedTo as string,
-      page: page ? parseInt(page as string, 10) : undefined,
-      limit: limit ? parseInt(limit as string, 10) : undefined,
-    });
+    const result = await inquiryService.getAll(
+      {
+        status: status as InquiryStatus,
+        search: search as string,
+        assignedTo: assignedTo as string,
+        page: page ? parseInt(page as string, 10) : undefined,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+      },
+      req.user
+    );
 
     res.status(200).json({
       success: true,
@@ -51,7 +54,7 @@ export const getAllInquiries = async (req: AuthenticatedRequest, res: Response, 
 export const getInquiryById = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const inquiry = await inquiryService.getById(id);
+    const inquiry = await inquiryService.getById(id, req.user);
 
     res.status(200).json({
       success: true,
@@ -65,7 +68,7 @@ export const getInquiryById = async (req: AuthenticatedRequest, res: Response, n
 export const updateInquiry = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const updated = await inquiryService.update(id, req.body);
+    const updated = await inquiryService.update(id, req.body, req.user);
 
     res.status(200).json({
       success: true,
@@ -85,7 +88,7 @@ export const addInternalNote = async (req: AuthenticatedRequest, res: Response, 
       name: req.user?.name || 'Charter Broker',
     };
 
-    const updated = await inquiryService.addNote(id, req.body, author);
+    const updated = await inquiryService.addNote(id, req.body, author, req.user);
 
     res.status(201).json({
       success: true,

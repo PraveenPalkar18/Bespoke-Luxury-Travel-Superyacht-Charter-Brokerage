@@ -9,11 +9,11 @@ Protected routes require the `Authorization: Bearer <JWT_TOKEN>` header.
 
 ---
 
-### Authentication Endpoints
+### Authentication & Access Governance Endpoints
 
 #### 1. `POST /api/auth/login`
-Authenticates a broker or admin and returns a signed JWT.
-- **Access**: Public
+Authenticates a broker or admin, creates a server-tracked session in MongoDB, sets a secure HttpOnly cookie (`aurelia_session`), and returns credentials.
+- **Access**: Public (Protected by rate limiter)
 - **Request Body**:
 ```json
 {
@@ -25,22 +25,78 @@ Authenticates a broker or admin and returns a signed JWT.
 ```json
 {
   "success": true,
-  "data": {
-    "token": "eyJhbGciOi...",
-    "user": {
-      "id": "6724...",
-      "name": "Alexander Vance",
-      "email": "alexander.vance@aureliatravel.com",
-      "role": "admin",
-      "title": "Head of Private Charters"
-    }
-  }
+  "token": "eyJhbGciOi...",
+  "user": {
+    "id": "6724...",
+    "name": "Alexander Vance",
+    "email": "alexander.vance@aureliatravel.com",
+    "role": "admin",
+    "title": "Managing Director"
+  },
+  "sessionId": "6afbdb...",
+  "message": "Authentication successful"
 }
 ```
 
-#### 2. `GET /api/auth/me`
-Fetches current session user profile.
+#### 2. `POST /api/auth/logout`
+Invalidates active server session in MongoDB and clears the `aurelia_session` HttpOnly cookie.
 - **Access**: Private (Admin or Broker)
+
+#### 3. `GET /api/auth/me`
+Fetches current session user profile along with evaluated RBAC permissions.
+- **Access**: Private (Admin or Broker)
+
+#### 4. `GET /api/auth/brokers`
+Returns broker roster. Admins receive all accounts with active status and assigned dossier counts; brokers receive active contacts.
+- **Access**: Private (Admin or Broker)
+
+#### 5. `POST /api/auth/invite`
+Admin-only generation of a single-use onboarding invitation token (hashed via SHA-256 in MongoDB).
+- **Access**: Admin only (`brokers.invite` permission)
+- **Request Body**:
+```json
+{
+  "name": "Julian de Valois",
+  "email": "j.valois@aureliatravel.com",
+  "title": "Senior Superyacht Charter Specialist",
+  "phone": "+33 4 93 34 00 00"
+}
+```
+
+#### 6. `GET /api/auth/invite/:token`
+Validates that an invitation token exists, is unexpired, and has not been used or revoked.
+- **Access**: Public (Rate-limited)
+
+#### 7. `POST /api/auth/accept-invite`
+Completes broker onboarding by verifying token and hashing a user-chosen password with bcrypt (salt cost 12).
+- **Access**: Public (Rate-limited)
+- **Request Body**:
+```json
+{
+  "token": "<raw_crypto_token>",
+  "password": "ComplexPassword2026!"
+}
+```
+
+#### 8. `PATCH /api/auth/brokers/:id/status`
+Admin-only activation or deactivation of a broker account. Deactivation immediately invalidates all active sessions for the broker in real-time.
+- **Access**: Admin only (`brokers.deactivate` permission)
+- **Request Body**:
+```json
+{
+  "isActive": false,
+  "reason": "Administrative leave"
+}
+```
+
+#### 9. `POST /api/auth/invitations/:id/revoke`
+Admin-only revocation of a pending invitation.
+- **Access**: Admin only (`brokers.invite` permission)
+
+#### 10. `GET /api/auth/audit-logs`
+Administrative audit trail query endpoint with pagination and filtering by action/resource.
+- **Access**: Admin only (`audit.read` permission)
+
 
 ---
 
@@ -180,4 +236,44 @@ Adds an internal private note or supplier interaction record.
 #### 6. `GET /api/stats/overview`
 Returns high-level broker metrics: total enquiries, new, in-progress, confirmed, distribution by service.
 - **Access**: Private (Admin, Broker)
+
+---
+
+### Proposals, Quotations & Itinerary Engine Endpoints
+
+#### 1. `POST /api/proposals`
+Creates a tailored client proposal with day-by-day itinerary and quotation pricing.
+- **Access**: Private (Admin, Broker)
+- **Request Body**: `createProposalSchema` (inquiryId, title, destination, clientName, clientEmail, validUntil, executiveSummary, aircraft, yacht, itinerary, pricing, inclusions, exclusions)
+
+#### 2. `GET /api/proposals/inquiry/:inquiryId`
+Lists all bespoke proposals created for a specific enquiry dossier.
+- **Access**: Private (Admin, Broker)
+
+#### 3. `GET /api/proposals/:id`
+Fetches full details of a specific proposal.
+- **Access**: Private (Admin, Broker)
+
+#### 4. `PATCH /api/proposals/:id`
+Updates proposal pricing, itinerary waypoints, or fleet allocations.
+- **Access**: Private (Admin, Broker)
+
+#### 5. `POST /api/proposals/:id/send`
+Dispatches proposal to client: marks status as `sent`, updates inquiry to `quote_sent`, and activates client presentation link.
+- **Access**: Private (Admin, Broker)
+
+#### 6. `GET /api/proposals/public/:token`
+Client-facing digital proposal presentation (token-authenticated, no login required for UHNW principal). Automatically records first view as `viewed`.
+- **Access**: Public (Valid Client Access Token)
+
+#### 7. `POST /api/proposals/public/:token/respond`
+Client decision interaction (accept proposal, request adjustments, or decline). Acceptance automatically updates inquiry status to `confirmed` and logs client instructions.
+- **Access**: Public (Valid Client Access Token)
+- **Request Body**:
+```json
+{
+  "decision": "accepted",
+  "clientNotes": "Confirmed. Ready for formal MYBA agreement."
+}
+```
 

@@ -6,7 +6,7 @@ import {
   updateYacht,
   deleteYacht,
 } from '../controllers/yacht.controller';
-import { authenticate, requireRole } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { yachtSchema } from '../validators';
 
@@ -14,9 +14,8 @@ const router = Router();
 
 router.get('/', getAllYachts);
 router.get('/:id', getYachtById);
-router.post('/', authenticate, requireRole(['admin']), validateBody(yachtSchema), createYacht);
-router.patch('/:id', authenticate, requireRole(['admin']), updateYacht);
-router.delete('/:id', authenticate, requireRole(['admin']), deleteYacht);
+router.post('/', authenticate, requirePermission('catalogue.create'), validateBody(yachtSchema), createYacht);
+router.patch('/:id', authenticate, requirePermission('catalogue.update'), updateYacht);
+router.delete('/:id', authenticate, requirePermission('catalogue.delete'), deleteYacht);
 
 export default router;
-

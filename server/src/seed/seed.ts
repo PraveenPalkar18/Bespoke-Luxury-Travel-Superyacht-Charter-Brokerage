@@ -5,12 +5,14 @@ import { AircraftModel } from '../models/Aircraft';
 import { YachtModel } from '../models/Yacht';
 import { DestinationModel } from '../models/Destination';
 import { InquiryModel } from '../models/Inquiry';
+import { ProposalModel } from '../models/Proposal';
 import {
   getSeedUsers,
   seedAircraft,
   seedYachts,
   seedDestinations,
   seedInquiries,
+  seedProposals,
 } from './seedData';
 
 export const runSeed = async () => {
@@ -25,6 +27,7 @@ export const runSeed = async () => {
       YachtModel.deleteMany({}),
       DestinationModel.deleteMany({}),
       InquiryModel.deleteMany({}),
+      ProposalModel.deleteMany({}),
     ]);
 
     console.log('[Seed] Inserting luxury users...');
@@ -42,6 +45,9 @@ export const runSeed = async () => {
 
     console.log('[Seed] Inserting demonstration client enquiries...');
     await InquiryModel.insertMany(seedInquiries);
+
+    console.log('[Seed] Inserting bespoke travel proposals...');
+    await ProposalModel.insertMany(seedProposals);
 
     console.log('[Seed] Database successfully seeded with luxury demonstration assets!');
     process.exit(0);
