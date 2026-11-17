@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const destination_controller_1 = require("../controllers/destination.controller");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const validators_1 = require("../validators");
+const router = (0, express_1.Router)();
+router.get('/', destination_controller_1.getAllDestinations);
+router.get('/:id', destination_controller_1.getDestinationByIdOrSlug);
+router.post('/', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.create'), (0, validate_1.validateBody)(validators_1.destinationSchema), destination_controller_1.createDestination);
+router.patch('/:id', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.update'), destination_controller_1.updateDestination);
+exports.default = router;

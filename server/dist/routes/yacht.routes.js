@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const yacht_controller_1 = require("../controllers/yacht.controller");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const validators_1 = require("../validators");
+const router = (0, express_1.Router)();
+router.get('/', yacht_controller_1.getAllYachts);
+router.get('/:id', yacht_controller_1.getYachtById);
+router.post('/', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.create'), (0, validate_1.validateBody)(validators_1.yachtSchema), yacht_controller_1.createYacht);
+router.patch('/:id', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.update'), yacht_controller_1.updateYacht);
+router.delete('/:id', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.delete'), yacht_controller_1.deleteYacht);
+exports.default = router;

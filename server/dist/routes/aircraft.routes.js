@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const aircraft_controller_1 = require("../controllers/aircraft.controller");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const validators_1 = require("../validators");
+const router = (0, express_1.Router)();
+router.get('/', aircraft_controller_1.getAllAircraft);
+router.get('/:id', aircraft_controller_1.getAircraftById);
+router.post('/', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.create'), (0, validate_1.validateBody)(validators_1.aircraftSchema), aircraft_controller_1.createAircraft);
+router.patch('/:id', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.update'), aircraft_controller_1.updateAircraft);
+router.delete('/:id', auth_1.authenticate, (0, auth_1.requirePermission)('catalogue.delete'), aircraft_controller_1.deleteAircraft);
+exports.default = router;
