@@ -2,11 +2,11 @@
   "name": "luxury-travel-server",
   "version": "1.0.0",
   "description": "Backend API for Aurelia & Co. Bespoke Luxury Travel Brokerage",
-  "main": "dist/server.js",
+  "main": "index.js",
   "scripts": {
     "dev": "node ./node_modules/ts-node-dev/lib/bin.js --respawn --transpile-only src/server.ts",
     "build": "node ./node_modules/typescript/bin/tsc",
-    "start": "node dist/server.js",
+    "start": "node index.js",
     "seed": "node ./node_modules/ts-node-dev/lib/bin.js --transpile-only src/seed/seed.ts",
     "test": "node ./node_modules/ts-node/dist/bin.js test/audit-verification.ts && node ./node_modules/ts-node/dist/bin.js -T test/auth-security-verification.ts"
   },
