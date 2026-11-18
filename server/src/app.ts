@@ -52,7 +52,6 @@ export const createApp = () => {
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
   // Anti-CSRF Protection for cookie-authenticated state-changing requests
-  app.use('/api', csrfProtection);
   app.use(csrfProtection);
 
   // Lazy DB connection middleware (crucial for serverless environments)
@@ -90,7 +89,6 @@ export const createApp = () => {
   }
 
   // Global rate limiter for API routes
-  app.use('/api', apiLimiter);
   app.use(apiLimiter);
 
   // Logging

@@ -14,8 +14,9 @@ const initDbIfNeeded = () => {
         });
     }
 };
-// Bind to port for local development, standalone execution, or Vercel service runtime
-if (process.env.NODE_ENV !== 'test') {
+// Only bind to port for local development or standalone execution.
+// In Vercel or other serverless environments, Vercel manages the HTTP port binding and invocation externally.
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
     initDbIfNeeded();
     const port = process.env.PORT ? parseInt(process.env.PORT, 10) : config_1.config.port;
     app.listen(port, () => {

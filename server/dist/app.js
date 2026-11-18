@@ -48,7 +48,6 @@ const createApp = () => {
     app.use(express_1.default.json({ limit: '5mb' }));
     app.use(express_1.default.urlencoded({ extended: true, limit: '5mb' }));
     // Anti-CSRF Protection for cookie-authenticated state-changing requests
-    app.use('/api', csrf_1.csrfProtection);
     app.use(csrf_1.csrfProtection);
     // Lazy DB connection middleware (crucial for serverless environments)
     if (process.env.NODE_ENV !== 'test') {
@@ -82,7 +81,6 @@ const createApp = () => {
         });
     }
     // Global rate limiter for API routes
-    app.use('/api', rateLimiter_1.apiLimiter);
     app.use(rateLimiter_1.apiLimiter);
     // Logging
     if (process.env.NODE_ENV !== 'test') {
